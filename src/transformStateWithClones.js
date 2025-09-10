@@ -6,31 +6,46 @@
  *
  * @return {Object[]}
  */
+'use strict';
+
+/**
+ * @param {Object} state
+ * @param {Object[]} actions
+ *
+ * @return {Object[]}
+ */
 function transformStateWithClones(state, actions) {
   const stateHistory = [];
-  let currentStatee = { ...state };
+  let currentState = { ...state };
 
   for (const action of actions) {
     switch (action.type) {
       case 'clear':
-        currentStatee = {};
+        currentState = {};
         break;
       case 'addProperties':
-        currentStatee = { ...currentStatee, ...action.extraData };
+        if (action.extraData && typeof action.extraData === 'object') {
+          currentState = { ...currentState, ...action.extraData };
+        }
         break;
       case 'removeProperties':
-        currentStatee = Object.keys(currentStatee).reduce((newState, key) => {
-          if (!action.keysToRemove.includes(key)) {
-            newState[key] = currentStatee[key];
-          }
+        if (Array.isArray(action.keysToRemove)) {
+          currentState = Object.keys(currentState).reduce((newState, key) => {
+            if (!action.keysToRemove.includes(key)) {
+              newState[key] = currentState[key];
+            }
 
-          return newState;
-        }, {});
+            return newState;
+          }, {});
+        }
         break;
       default:
-        break;
+        throw new Error(`Unknown action type: ${action.type}`);
     }
-    stateHistory.push({ ...currentStatee });
+
+    const stateCopy = { ...currentState };
+
+    stateHistory.push(stateCopy);
   }
 
   return stateHistory;
